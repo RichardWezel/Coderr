@@ -60,7 +60,7 @@ class RegistrationView(APIView):
                 data, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response(
-                {'detail': 'Interner Serverfehler.'},
+                {'detail': 'internal server error.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -102,7 +102,7 @@ class LoginView(APIView):
         user = authenticate(request, username=username, password=password)
         if user is None:
             return Response(
-                {"detail": "E-Mail oder Passwort ist falsch."},
+                {"detail": "email or password is incorrect."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
