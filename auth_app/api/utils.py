@@ -7,30 +7,30 @@ def validate_login_data(data):
     """
     Validate login input data.
 
-    Checks whether the required fields 'email' and 'password' are present
+    Checks whether the required fields 'username' and 'password' are present
     in the request data. If either is missing, returns an error response.
 
     Args:
-        data (dict): The request data containing email and password.
+        data (dict): The request data containing username and password.
 
     Returns:
         tuple:
-            - email (str or None): The provided email address.
+            - username (str or None): The provided username.
             - password (str or None): The provided password.
             - error_response (Response or None): A DRF Response object with error
               details, or None if validation passed.
     """
 
-    email = data.get('email')
+    username = data.get('username')
     password = data.get('password')
 
-    if not email or not password:
+    if not username or not password:
         return None, None, Response(
-            {"detail": "You are not a member of this board. Please check your email and password."},
+            {"detail": "You are not a member of this board. Please check your username and password."},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    return email, password, None
+    return username, password, None
 
 
 def get_user_token_response(user):
@@ -52,7 +52,7 @@ def get_user_token_response(user):
         token, created = Token.objects.get_or_create(user=user)
         return Response({
             'token': token.key,
-            'fullname': user.fullname,
+            'username': user.username,
             'email': user.email,
             'user_id': user.id,
         }, status=status.HTTP_200_OK)

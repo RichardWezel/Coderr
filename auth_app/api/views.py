@@ -95,11 +95,11 @@ class LoginView(APIView):
             Response: A JSON response with user data and token or error message.
         """
         
-        email, password, error_response = validate_login_data(request.data)
+        username, password, error_response = validate_login_data(request.data)
         if error_response:
             return error_response
 
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, username=username, password=password)
         if user is None:
             return Response(
                 {"detail": "E-Mail oder Passwort ist falsch."},

@@ -1,6 +1,4 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
-
 from auth_app.models import CustomUser
 
 
@@ -8,7 +6,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
     """
     Serializer for registering a new user.
 
-    This serializer handles user registration by requiring a full name,
+    This serializer handles user registration by requiring a username,
     email, password, and a repeated password for confirmation.
     The password is write-only and will not appear in any API responses.
     """
@@ -77,5 +75,5 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'fullname']
+        fields = ['id', 'email', 'username', 'type']
         read_only_fields = ['id']
