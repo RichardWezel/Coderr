@@ -7,6 +7,10 @@ from profile_app.api.serializers import UserProfileSerializer
 from rest_framework import generics
 from django.http import Http404
 from profile_app.api.serializers import FileUploadSerializer
+from django.core.exceptions import PermissionDenied
+from django.db import transaction
+from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
 
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
@@ -15,18 +19,40 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
-
-    def get_serializer_class(self):
-        return UserProfileSerializer if self.request.method == 'GET' else super().get_serializer_class()
-  
+    
     def get_object(self):
         try:
-            return UserProfile.objects.get(pk=self.kwargs['pk'])
+            obj = UserProfile.objects.get(pk=self.kwargs['pk'])
         except UserProfile.DoesNotExist:
-            raise Http404("User profile does not exist ")
-        
+            raise Http404("User profile does not exist")
+        if obj.user != self.request.user:
+            raise PermissionDenied("Not allowed to edit this profile.")
+        return obj
+    
+    @transaction.atomic
     def update(self, request, *args, **kwargs):
-        return super().update(request, *args, **kwargs)
+        partial = kwargs.pop('partial', request.method.upper() == 'PATCH')
+        instance = self.get_object()
+
+        raw_email = request.data.get('email', None)
+        if raw_email is not None:
+            email = serializers.EmailField().to_internal_value(raw_email)
+
+            User = get_user_model()
+            if User.objects.filter(email=email).exclude(pk=instance.user.pk).exists():
+                return Response(
+                    {"email": "This email is already in use."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            instance.user.email = email
+            instance.user.save(update_fields=["email"])
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
     
 class FileUploadView(APIView):
     def post(self, request, format=None):
