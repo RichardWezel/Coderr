@@ -15,8 +15,8 @@ class Profile(APIView):
 
     def get(self, request, pk):
         try:
-            profile = Profile.objects.get(pk=pk)
+            profile = UserProfile.objects.get(pk=pk)
             serializer = UserProfileSerializer(profile)
             return Response(serializer.data)
-        except Profile.DoesNotExist:
+        except UserProfile.DoesNotExist:
             return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)

@@ -3,7 +3,10 @@ from auth_app.models import CustomUser
 
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    user = models.OneToOneField(
+        CustomUser, 
+        on_delete=models.CASCADE,
+        related_name='profile')
     username = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=30, blank=True) 
     last_name = models.CharField(max_length=30, blank=True)

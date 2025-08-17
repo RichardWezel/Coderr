@@ -4,7 +4,7 @@ from profile_app.models import UserProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
 
-    user = serializers.IntegerField(source='user_id', read_only=True)
+    user = serializers.IntegerField(source='user.id', read_only=True)
 
     class Meta:
         model = UserProfile

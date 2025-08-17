@@ -10,38 +10,10 @@ from .serializers import RegistrationSerializer
 User = get_user_model()
 
 class RegistrationView(APIView):
-    """
-    View for user registration.
-
-    Allows unauthenticated users to create an account by submitting their
-    full name, email, password, and repeated password.
-
-    On success:
-        - Validates input data using the RegistrationSerializer
-        - Creates a new user
-        - Generates an auth token
-        - Returns user information and token
-
-    Returns:
-        HTTP 201: If user is created successfully
-        HTTP 400: If validation fails
-        HTTP 500: On unexpected server error
-    """
+    
     permission_classes = [permissions.AllowAny] 
 
     def post(self, request, *args, **kwargs):
-        """
-        Handle POST requests to register a new user.
-
-        Validates the provided data, saves the user, creates a token,
-        and returns user details along with the token.
-
-        Args:
-            request: The HTTP request object containing user data.
-
-        Returns:
-            Response: A JSON response with user data and token or error details.
-        """
 
         try:
             serializer = RegistrationSerializer(data=request.data)
