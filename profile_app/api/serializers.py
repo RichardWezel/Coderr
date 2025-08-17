@@ -12,7 +12,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['user', 'username', 'first_name', 'last_name', 'file', 'location', 'tel', 'description', 'working_hours', 'type', 'email', 'created_at']
         read_only_fields = ['user', 'username', 'type', 'created_at']
 
-    # Field-level validation methods
     def _validate_name(self, value):
         if not isinstance(value, str):
             raise serializers.ValidationError("Must be a string.")
@@ -23,7 +22,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Invalid characters in name.")
         return value
 
-    # ---- Feld-Validatoren ----
     def validate_tel(self, value):
         if value and not str(value).isdigit() and len(str(value)) > 0 and not str(value):
             raise serializers.ValidationError("Phone number must contain only digits in a string.")
@@ -60,18 +58,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if value.isdigit():
             raise serializers.ValidationError("Description cannot be only digits.")
         return value
-    
-    def update(self, instance, validated_data):
-        """
-        Wenn 'email' im Input enthalten ist, auch den zugehörigen User updaten.
-        """
-        email = self.initial_data.get("email")  # rohes Input
-        if email:
-            user = instance.user
-            user.email = email
-            user.save(update_fields=["email"])
-        # Profil normal aktualisieren
-        return super().update(instance, validated_data)
 
 class FileUploadSerializer(serializers.ModelSerializer):
     class Meta:
