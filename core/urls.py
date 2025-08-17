@@ -3,6 +3,7 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('api/', include(('auth_app.api.urls', 'auth_app'), namespace='auth_app')),
     path('api/', include(('profile_app.api.urls', 'profile_app'), namespace='profile_app')),
 ]

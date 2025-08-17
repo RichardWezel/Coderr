@@ -21,16 +21,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
-        """
-        Validate user input during registration.
-
-        Ensures that the provided passwords match and that the email
-        address has not already been registered.
-
-        Raises:
-            serializers.ValidationError: If the passwords do not match
-            or if the email is already in use.
-        """
 
         if data['password'] != data['repeated_password']:
             raise serializers.ValidationError("Paswords do not match.")

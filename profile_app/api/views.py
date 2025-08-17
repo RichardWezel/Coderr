@@ -4,19 +4,25 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from profile_app.models import UserProfile
 from profile_app.api.serializers import UserProfileSerializer
+from rest_framework import generics
+from django.http import Http404
 
 
-class Profile(APIView):
+class ProfileDetailView(generics.RetrieveUpdateAPIView):
     """
     View to retrieve a user's profile by primary key.
     """
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
 
-    def get(self, request, pk):
+    def get_serializer_class(self):
+        return UserProfileSerializer if self.request.method == 'GET' else super().get_serializer_class()
+  
+    def get_object(self):
         try:
-            profile = UserProfile.objects.get(pk=pk)
-            serializer = UserProfileSerializer(profile)
-            return Response(serializer.data)
+            return UserProfile.objects.get(pk=self.kwargs['pk'])
         except UserProfile.DoesNotExist:
-            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+            raise Http404("User profile does not exist ")
+        
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
