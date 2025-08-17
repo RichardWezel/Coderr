@@ -11,6 +11,7 @@ class Profile(APIView):
     View to retrieve a user's profile by primary key.
     """
     permission_classes = [IsAuthenticated]
+    serializer_class = UserProfileSerializer
 
     def get(self, request, pk):
         try:
