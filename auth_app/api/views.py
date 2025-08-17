@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, get_user_model
 from .utils import validate_login_data, get_user_token_response
+from rest_framework.authentication import TokenAuthentication
 
 from .serializers import RegistrationSerializer
 
@@ -12,6 +13,7 @@ User = get_user_model()
 class RegistrationView(APIView):
     
     permission_classes = [permissions.AllowAny] 
+    authentication_classes = []
 
     def post(self, request, *args, **kwargs):
 
