@@ -6,6 +6,7 @@ from profile_app.models import UserProfile
 from profile_app.api.serializers import UserProfileSerializer
 from rest_framework import generics
 from django.http import Http404
+from profile_app.api.serializers import FileUploadSerializer
 
 
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
@@ -26,3 +27,11 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
         
     def update(self, request, *args, **kwargs):
         return super().update(request, *args, **kwargs)
+    
+class FileUploadView(APIView):
+    def post(self, request, format=None):
+        serializer = FileUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

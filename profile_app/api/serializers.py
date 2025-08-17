@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from profile_app.models import UserProfile
+from profile_app.models import FileUpload
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -56,7 +57,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return super().validate(attrs)
     
 
-
+class FileUploadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FileUpload
+        fields = ['file', 'uploaded_at']
 
     
         
