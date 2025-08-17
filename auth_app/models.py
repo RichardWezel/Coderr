@@ -15,10 +15,12 @@ class CustomUser(AbstractUser):
         null=False,
     )
 
-    def __str__(self):
-        return f"{self.username} ({self.type})"
-    
     class Meta:
         verbose_name = "User"
         verbose_name_plural = "Users"
-        ordering = ["username"]  
+        ordering = ["id"]  
+
+    def __str__(self):
+        return f"{self.username} ({self.type})"
+    
+   
