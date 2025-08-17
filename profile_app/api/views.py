@@ -1,16 +1,16 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from profile_app.models import UserProfile
-from profile_app.api.serializers import UserProfileSerializer
-from rest_framework import generics
 from django.http import Http404
-from profile_app.api.serializers import FileUploadSerializer
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.contrib.auth import get_user_model
-from rest_framework import serializers
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status, generics, serializers
+
+from profile_app.models import UserProfile
+from profile_app.api.serializers import UserProfileSerializer, FileUploadSerializer, TypeSpecificProfileSerializer
+from auth_app.models import CustomUser
 
 
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
@@ -52,6 +52,36 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
+        return Response(serializer.data)
+    
+class BussinessProfileView(generics.ListAPIView):
+    """
+    View to retrieve a business profile by primary key.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = TypeSpecificProfileSerializer
+    
+    def get_queryset(self):
+        return UserProfile.objects.filter(user__type=CustomUser.Roles.BUSINESS)
+
+    def list(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+class CustomerProfileView(generics.ListAPIView):
+    """
+    View to retrieve a business profile by primary key.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = TypeSpecificProfileSerializer
+    
+    def get_queryset(self):
+        return UserProfile.objects.filter(user__type=CustomUser.Roles.CUSTOMER)
+
+    def list(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
     
 class FileUploadView(APIView):

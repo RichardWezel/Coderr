@@ -59,6 +59,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Description cannot be only digits.")
         return value
 
+class TypeSpecificProfileSerializer(UserProfileSerializer):
+
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'username', 'first_name', 'last_name', 'file', 'location', 'tel', 'description', 'working_hours', 'type']
+        read_only_fields = ['user', 'username', 'type', 'created_at']
+    
+
 class FileUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = FileUpload
