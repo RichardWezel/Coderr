@@ -1,9 +1,8 @@
-from rest_framework.authtoken.models import Token
+
 from rest_framework.test import APITestCase
 from auth_app.models import CustomUser
 from profile_app.models import UserProfile
-from django.urls import reverse
-from rest_framework import status
+
 
 
 class CreateProfileOnUserSignalTest(APITestCase):

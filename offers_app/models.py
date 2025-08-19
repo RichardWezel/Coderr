@@ -26,17 +26,18 @@ class OfferDetail(models.Model):
         BASIC = "basic", "basic"
         STANDARD = "standard", "Standard"
         PREMIUM = "premium", "Premium"
+
+    offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="details", null=True, blank=True)  # 👈 Verbindung
      
     title = models.CharField(max_length=255)
+    revisions = models.PositiveIntegerField(default=0)
     delivery_time_in_days = models.PositiveIntegerField(default=0)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    features = models.JSONField(default=dict)
+    features = models.JSONField(default=list, help_text="List of feature strings")
     offer_type = models.CharField(
         max_length=20,
         choices=Roles.choices,
         default=Roles.BASIC,
-        blank=False,
-        null=False,
     )
 
     class Meta:
