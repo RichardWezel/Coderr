@@ -6,7 +6,7 @@ from auth_app.models import CustomUser
 class Offer(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
-    image = models.ImageField(upload_to='offer_images/', blank=True)
+    image = models.FileField(upload_to='offer_images/', blank=True, null=True)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -17,3 +17,33 @@ class Offer(models.Model):
         verbose_name = "Offer"
         verbose_name_plural = "Offers"
         ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
+class OfferDetail(models.Model):
+    class Roles(models.TextChoices):
+        BASIC = "basic", "basic"
+        STANDARD = "standard", "Standard"
+        PREMIUM = "premium", "Premium"
+     
+    title = models.CharField(max_length=255)
+    delivery_time_in_days = models.PositiveIntegerField(default=0)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    features = models.JSONField(default=dict)
+    offer_type = models.CharField(
+        max_length=20,
+        choices=Roles.choices,
+        default=Roles.BASIC,
+        blank=False,
+        null=False,
+    )
+
+    class Meta:
+        verbose_name = "Offer Detail"
+        verbose_name_plural = "Offer Details"
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.title} - {self.offer_type}"
+
