@@ -1,5 +1,6 @@
 from django.db import transaction
 from collections import OrderedDict
+from urllib.parse import urlparse
 
 from rest_framework import serializers
 from rest_framework.reverse import reverse
@@ -8,7 +9,7 @@ from offers_app.models import Offer, OfferDetail
 from auth_app.models import CustomUser
 from reviews_app.models import Review
 
-class OfferDetailFullSerializer(serializers.ModelSerializer):
+class OfferDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = OfferDetail
         fields = ['id', 'title', 'revisions', 'delivery_time_in_days', 'price', 'features', 'offer_type']
@@ -16,15 +17,37 @@ class OfferDetailFullSerializer(serializers.ModelSerializer):
 
     def validate_features(self, value):
         if not isinstance(value, list) or not all(isinstance(x, str) for x in value):
-            raise serializers.ValidationError("features muss eine Liste von Strings sein.")
+            raise serializers.ValidationError("features must be a list of strings.")
         return value
-
-class OfferDetailWriteSerializer(OfferDetailFullSerializer):
-    pass
+    
+    def validate_title(self, value):
+        if not isinstance(value, str) or not value.strip():
+            raise serializers.ValidationError("Title must be a non-empty string.")
+        return value.strip()
+    
+    def validate_revisions(self, value):
+        if not isinstance(value, int) or value < 0:
+            raise serializers.ValidationError("Revisions must be a non-negative integer.")
+        return value
+    
+    def validate_delivery_time_in_days(self, value):
+        if not isinstance(value, int) or value < 0:
+            raise serializers.ValidationError("Delivery time must be a non-negative integer.")
+        return value
+    
+    def validate_price(self, value):
+        if not isinstance(value, (int, float)) or value < 0:
+            raise serializers.ValidationError("Price must be a non-negative number.")
+        return value
+    
+    def validate_offer_type(self, value):
+        if value not in [choice[0] for choice in OfferDetail.Roles.choices]:
+            raise serializers.ValidationError(f"Offer type must be one of {OfferDetail.Roles.choices}.")
+        return value
 
 class OfferSerializer(serializers.ModelSerializer):
 
-    details = OfferDetailWriteSerializer(many=True, write_only=True, required=False)
+    details = OfferDetailSerializer(many=True, write_only=True, required=False)
     user_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -41,24 +64,32 @@ class OfferSerializer(serializers.ModelSerializer):
         }
 
     def _thin_details(self, instance):
-        request = self.context.get('request')
         items = []
         for d in instance.details.all().only('id'):
+            # relative URL (ohne Domain), z.B. "/api/offerdetails/2/"
+            rel_url = reverse('offers:offerdetail-detail', args=[d.id])  # kein request!
+
+            # auf "offerdetails/2/" normalisieren:
+            path = urlparse(rel_url).path.lstrip('/')  # "api/offerdetails/2/"
+            if path.startswith('api/'):
+                path = path[4:]  # "offerdetails/2/"
+
             items.append({
                 "id": d.id,
-                "url": reverse('offers:offerdetail-detail', args=[d.id], request=request)
+                "url": path,  # -> "offerdetails/2/"
             })
         return items
 
     def _full_details(self, instance):
-        return OfferDetailFullSerializer(instance.details.all(), many=True, context=self.context).data
+        return OfferDetailSerializer(instance.details.all(), many=True, context=self.context).data
     
     def validate(self, attrs):
         request = self.context.get('request')
         if request and request.method.upper() == 'POST':
             details = self.initial_data.get('details', [])
-            if not details:
-                raise serializers.ValidationError({'details': 'Mindestens ein Paket (Detail) ist erforderlich.'})
+            # lists haben kein .count() für Länge:
+            if not isinstance(details, list) or len(details) < 3:
+                raise serializers.ValidationError({'details': 'At least 3 details are required.'})
         return attrs
 
     def to_representation(self, instance):
@@ -111,13 +142,10 @@ class OfferSerializer(serializers.ModelSerializer):
 
         return offer
     
-class OfferDetailReviewsSerializer(serializers.ModelSerializer):
-    reviews_count = serializers.SerializerMethodField()
-
+class OfferDetaisPKSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = OfferDetail
-        fields = ['id', 'title', 'delivery_time_in_days', 'price', 'features', 'offer_type', 'reviews_count']
+        fields = ['id', 'user', 'title', 'image','description', 'created_at', 'updated_at', 'details', 'min_price', 'min_delivery_time']
 
-    def get_reviews_count(self, obj):
-        business_user = obj.offer.user
-        return Review.objects.filter(business_user=business_user).count()
+    
