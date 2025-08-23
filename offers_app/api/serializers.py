@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import transaction
 from collections import OrderedDict
 from urllib.parse import urlparse
@@ -7,7 +8,6 @@ from rest_framework.reverse import reverse
 
 from offers_app.models import Offer, OfferDetail
 from auth_app.models import CustomUser
-from reviews_app.models import Review
 
 class OfferDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,9 +36,11 @@ class OfferDetailSerializer(serializers.ModelSerializer):
         return value
     
     def validate_price(self, value):
-        if not isinstance(value, (int, float)) or value < 0:
+        if not isinstance(value, (int, float, Decimal)):
+            raise serializers.ValidationError("Price must be a number.")
+        if Decimal(value) < 0:
             raise serializers.ValidationError("Price must be a non-negative number.")
-        return value
+        return Decimal(value)
     
     def validate_offer_type(self, value):
         if value not in [choice[0] for choice in OfferDetail.Roles.choices]:
@@ -85,16 +87,30 @@ class OfferSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         request = self.context.get('request')
-        if request and request.method.upper() == 'POST':
-            details = self.initial_data.get('details', [])
-            # lists haben kein .count() für Länge:
-            if not isinstance(details, list) or len(details) < 3:
-                raise serializers.ValidationError({'details': 'At least 3 details are required.'})
+        method = getattr(request, 'method', 'GET').upper() if request else 'GET'
+        details = self.initial_data.get('details', None)
+
+        allowed = {c[0] for c in OfferDetail.Roles.choices}
+
+        if method == 'POST':
+            if not isinstance(details, list) or len(details) != 3:
+                raise serializers.ValidationError({'details': 'Exactly 3 details (basic, standard, premium) are required.'})
+            types = [d.get('offer_type') for d in details]
+            if set(types) != allowed:
+                raise serializers.ValidationError({'details': f'Must include exactly one of each: {sorted(allowed)}.'})
+
+        if method in ('PUT', 'PATCH') and details is not None:
+            if not isinstance(details, list) or len(details) == 0:
+                raise serializers.ValidationError({'details': 'If provided, details must be a non-empty list.'})
+            for d in details:
+                ot = d.get('offer_type')
+                if ot not in allowed:
+                    raise serializers.ValidationError({'details': f'Each detail must include a valid offer_type in {sorted(allowed)}.'})
+
         return attrs
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
-
         request = self.context.get('request')
         method = getattr(request, 'method', 'GET').upper() if request else 'GET'
         details_value = (
@@ -117,6 +133,16 @@ class OfferSerializer(serializers.ModelSerializer):
             else:
                 new[f] = rep.get(f)
         return new
+    
+    def _recalc_min_fields(self, offer: Offer):
+        qs = offer.details.all()
+        if not qs.exists():
+            offer.min_price = None
+            offer.min_delivery_time = None
+        else:
+            offer.min_price = min(d.price for d in qs)
+            offer.min_delivery_time = min(d.delivery_time_in_days for d in qs)
+        offer.save(update_fields=['min_price', 'min_delivery_time'])
   
 
     @transaction.atomic
@@ -126,21 +152,48 @@ class OfferSerializer(serializers.ModelSerializer):
 
         offer = Offer.objects.create(user=user, **validated_data)
 
-        min_price = None
-        min_delivery = None
-
         for detail in details_data:
-            d = OfferDetail.objects.create(offer=offer, **detail)
-            if min_price is None or d.price < min_price:
-                min_price = d.price
-            if min_delivery is None or d.delivery_time_in_days < min_delivery:
-                min_delivery = d.delivery_time_in_days
+            OfferDetail.objects.create(offer=offer, **detail)
 
-        offer.min_price = min_price
-        offer.min_delivery_time = min_delivery
-        offer.save(update_fields=['min_price', 'min_delivery_time'])
-
+        self._recalc_min_fields(offer)
         return offer
+    
+    @transaction.atomic
+    def update(self, instance: Offer, validated_data):
+        """
+        PATCH/PUT: Falls 'details' übergeben werden, MUSS jedes Element 'offer_type' enthalten.
+        Wir suchen das vorhandene Detail zu diesem Typ und aktualisieren nur die übergebenen Felder.
+        """
+        details_data = validated_data.pop('details', None)
+
+        # Zuerst das Offer selbst (title, description, image, ...)
+        instance = super().update(instance, validated_data)
+
+        if details_data is not None:
+            # Map für schnelleren Zugriff
+            existing_by_type = {d.offer_type: d for d in instance.details.all()}
+
+            allowed = {c[0] for c in OfferDetail.Roles.choices}
+            for payload in details_data:
+                ot = payload.get('offer_type')
+                if ot not in allowed:
+                    raise serializers.ValidationError({'details': f'Invalid offer_type: {ot}'})
+                if ot not in existing_by_type:
+                    # Optional: Streng sein und Fehler werfen, falls ein Typ fehlt:
+                    raise serializers.ValidationError({'details': f'Offer does not have a detail for type "{ot}". You must maintain exactly one per type.'})
+
+                detail = existing_by_type[ot]
+
+                # Nur Felder updaten, die im Payload enthalten sind:
+                updatable_fields = ['title', 'revisions', 'delivery_time_in_days', 'price', 'features']
+                for f in updatable_fields:
+                    if f in payload:
+                        setattr(detail, f, payload[f])
+                detail.save()
+
+        # min_* neu berechnen
+        self._recalc_min_fields(instance)
+        return instance
     
 class OfferDetaisPKSerializer(serializers.ModelSerializer):
     

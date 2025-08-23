@@ -44,6 +44,9 @@ class OfferDetail(models.Model):
         verbose_name = "Offer Detail"
         verbose_name_plural = "Offer Details"
         ordering = ['id']
+        constraints = [
+            models.UniqueConstraint(fields=['offer', 'offer_type'], name='uniq_offer_offer_type')
+        ]
 
     def __str__(self):
         return f"{self.title} - {self.offer_type}"
