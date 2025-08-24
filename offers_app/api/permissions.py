@@ -12,3 +12,18 @@ class isOwnerOrReadOnly(permissions.BasePermission):
         
         # Write permissions are only allowed to the owner of the object.
         return obj.user == request.user
+
+class isBusinessUser(permissions.BasePermission):
+    """
+    Custom permission to only allow business users to create, update, or delete offers.
+    """
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.type == "business"
+        )

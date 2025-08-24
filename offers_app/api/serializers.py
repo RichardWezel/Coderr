@@ -195,10 +195,10 @@ class OfferSerializer(serializers.ModelSerializer):
         self._recalc_min_fields(instance)
         return instance
     
-class OfferDetaisPKSerializer(serializers.ModelSerializer):
+# class OfferDetaisPKSerializer(serializers.ModelSerializer):
     
-    class Meta:
-        model = OfferDetail
-        fields = ['id', 'user', 'title', 'image','description', 'created_at', 'updated_at', 'details', 'min_price', 'min_delivery_time']
+#     class Meta:
+#         model = OfferDetail
+#         fields = ['id', 'title', 'revisions','image','description', 'created_at', 'updated_at', 'details', 'min_price']
 
     
