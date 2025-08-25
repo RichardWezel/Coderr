@@ -1,25 +1,25 @@
 from django.db import models
 from django.utils import timezone
-from auth_app.models import User
+from auth_app.models import CustomUser 
 
 class Order(models.Model):
     class OfferTypes(models.TextChoices):
-        BASIC = "basic", "basic"
+        BASIC = "basic", "Basic"
         STANDARD = "standard", "Standard"
         PREMIUM = "premium", "Premium"
 
-    class Roles(models.TextChoices):
-        BASIC = "basic", "basic"
-        STANDARD = "standard", "Standard"
-        PREMIUM = "premium", "Premium"
+    class OrderStatus(models.TextChoices):
+        IN_PROGRESS = "'in_progress", "In Progress"
+        COMPLETED = "completed", "Completed"
+        CANCELLED = "cancelled", "Cancelled"
 
     customer_user = models.ForeignKey(
-        User,
+        CustomUser,
         on_delete=models.CASCADE,
         related_name='customer_orders'
     )
     business_user = models.ForeignKey(
-        User,
+        CustomUser,
         on_delete=models.CASCADE,
         related_name='business_orders'
     )

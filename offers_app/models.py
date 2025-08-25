@@ -23,7 +23,7 @@ class Offer(models.Model):
 
 class OfferDetail(models.Model):
     class OfferTypes(models.TextChoices):
-        BASIC = "basic", "basic"
+        BASIC = "basic", "Basic"
         STANDARD = "standard", "Standard"
         PREMIUM = "premium", "Premium"
 
