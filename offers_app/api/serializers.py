@@ -66,21 +66,26 @@ class OfferSerializer(serializers.ModelSerializer):
         }
 
     def _thin_details(self, instance):
+        request = self.context.get('request')
+        has_pk = request and request.parser_context and request.parser_context.get('kwargs', {}).get('pk')
+
         items = []
         for d in instance.details.all().only('id'):
-            # relative URL (ohne Domain), z.B. "/api/offerdetails/2/"
-            rel_url = reverse('offers:offerdetail-detail', args=[d.id])  # kein request!
+            rel_url = reverse('offers:offerdetail-detail', args=[d.id], request=request if has_pk else None)
 
-            # auf "offerdetails/2/" normalisieren:
-            path = urlparse(rel_url).path.lstrip('/')  # "api/offerdetails/2/"
-            if path.startswith('api/'):
-                path = path[4:]  # "offerdetails/2/"
+            if has_pk:
+                # Absolute URL mit Domain
+                url = rel_url  # z.B. "http://127.0.0.1:8000/api/offerdetails/199/"
+            else:
+                # Relative kurze URL
+                path = urlparse(rel_url).path.lstrip('/')
+                if path.startswith('api/'):
+                    path = path[3:]  # "offerdetails/2/"
+                url = path
 
-            items.append({
-                "id": d.id,
-                "url": path,  # -> "offerdetails/2/"
-            })
+            items.append({"id": d.id, "url": url})
         return items
+
 
     def _full_details(self, instance):
         return OfferDetailSerializer(instance.details.all(), many=True, context=self.context).data
@@ -114,17 +119,10 @@ class OfferSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         method = getattr(request, 'method', 'GET').upper() if request else 'GET'
         details_value = (
-            self._full_details(instance) if method == 'POST'
+            self._full_details(instance) if method == 'POST' or (method in ('PUT', 'PATCH') and 'details' in self.initial_data)
             else self._thin_details(instance)
         )
-
-        ordered_fields = [
-            'id', 'user', 'title', 'image', 'description',
-            'created_at', 'updated_at',
-            'details',             
-            'min_price', 'min_delivery_time',
-            'user_details',
-        ]
+        ordered_fields = ['id', 'user', 'title', 'image', 'description','created_at', 'updated_at','details','min_price', 'min_delivery_time','user_details',]
 
         new = OrderedDict()
         for f in ordered_fields:

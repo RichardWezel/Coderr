@@ -28,7 +28,7 @@ def internal_error_response_500(exception):
         status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
 
-
+# offers/
 class OffersView(generics.ListCreateAPIView):
     queryset = Offer.objects.select_related('user').prefetch_related('details')
     serializer_class = OfferSerializer
@@ -39,6 +39,7 @@ class OffersView(generics.ListCreateAPIView):
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'min_price']
 
+# offers/<int:pk>/
 class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateAPIView):
     queryset = Offer.objects.select_related('user').prefetch_related('details')
     serializer_class = OfferSerializer
