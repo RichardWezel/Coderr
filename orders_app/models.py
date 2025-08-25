@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from auth_app.models import CustomUser 
+from offers_app.models import OfferDetail
 
 class Order(models.Model):
     class OfferTypes(models.TextChoices):
@@ -13,6 +14,7 @@ class Order(models.Model):
         COMPLETED = "completed", "Completed"
         CANCELLED = "cancelled", "Cancelled"
 
+    offer_detail_id = models.ForeignKey(OfferDetail, on_delete=models.CASCADE, related_name="orders")
     customer_user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
@@ -32,5 +34,9 @@ class Order(models.Model):
         max_length=20,
         choices=OfferTypes.choices,
         default=OfferTypes.BASIC,
-    
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=OrderStatus.choices,
+        default=OrderStatus.IN_PROGRESS,
     )
