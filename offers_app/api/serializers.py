@@ -43,8 +43,8 @@ class OfferDetailSerializer(serializers.ModelSerializer):
         return Decimal(value)
     
     def validate_offer_type(self, value):
-        if value not in [choice[0] for choice in OfferDetail.Roles.choices]:
-            raise serializers.ValidationError(f"Offer type must be one of {OfferDetail.Roles.choices}.")
+        if value not in [choice[0] for choice in OfferDetail.OfferTypes.choices]:
+            raise serializers.ValidationError(f"Offer type must be one of {OfferDetail.OfferTypes.choices}.")
         return value
 
 class OfferSerializer(serializers.ModelSerializer):
@@ -95,7 +95,7 @@ class OfferSerializer(serializers.ModelSerializer):
         method = getattr(request, 'method', 'GET').upper() if request else 'GET'
         details = self.initial_data.get('details', None)
 
-        allowed = {c[0] for c in OfferDetail.Roles.choices}
+        allowed = {c[0] for c in OfferDetail.OfferTypes.choices}
 
         if method == 'POST':
             if not isinstance(details, list) or len(details) != 3:
@@ -171,7 +171,7 @@ class OfferSerializer(serializers.ModelSerializer):
             # Map für schnelleren Zugriff
             existing_by_type = {d.offer_type: d for d in instance.details.all()}
 
-            allowed = {c[0] for c in OfferDetail.Roles.choices}
+            allowed = {c[0] for c in OfferDetail.OfferTypes.choices}
             for payload in details_data:
                 ot = payload.get('offer_type')
                 if ot not in allowed:
