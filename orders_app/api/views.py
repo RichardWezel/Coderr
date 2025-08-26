@@ -1,19 +1,20 @@
-from django.http import Http404
-from django.core.exceptions import PermissionDenied
-from django.db import transaction
-from django.contrib.auth import get_user_model
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.db import models
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status, generics, serializers
+from rest_framework.views import APIView
 
-from profile_app.models import UserProfile
-from profile_app.api.serializers import UserProfileSerializer, FileUploadSerializer, TypeSpecificProfileSerializer
-from auth_app.models import CustomUser
+from orders_app.models import Order
+from .serializers import OrderSerializer
 
-class OrdersView(APIView):
-    pass
+class OrdersView(generics.ListCreateAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Order.objects.filter(
+            models.Q(customer_user=user) | models.Q(business_user=user)
+        )
 
 class OrderUpdateDeleteView(APIView):
     pass
