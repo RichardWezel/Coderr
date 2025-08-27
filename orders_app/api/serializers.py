@@ -3,7 +3,7 @@ from orders_app.models import Order
 from offers_app.models import OfferDetail
 from auth_app.models import CustomUser
 
-class OrderSerializer(serializers.ModelSerializer):
+class OrderCreateSerializer(serializers.ModelSerializer):
 
     offer_detail_id = serializers.IntegerField(write_only=True)
 
@@ -68,12 +68,34 @@ class OrderSerializer(serializers.ModelSerializer):
             status=Order.OrderStatus.IN_PROGRESS,  # default explizit
         )
     
-    def update(self, instance, validated_data):
-        if 'status' in validated_data:
-            instance.status = validated_data['status']
-            instance.save()
-        if not instance.status == Order.OrderStatus.IN_PROGRESS:
+class OrderReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = [
+            'id', 'customer_user', 'business_user', 'title', 'revisions',
+            'delivery_time_in_days', 'price', 'features', 'offer_type',
+            'status', 'created_at', 'updated_at'
+        ]
+        read_only_fields = fields  # alles read-only
+
+class OrderStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['status']  # nur Status darf geupdatet werden
+
+    def validate_status(self, value):
+        # Optional: erlaubte Transitionen erzwingen
+        instance: Order = self.instance
+        if not instance:
+            return value
+
+        allowed_from = [Order.OrderStatus.IN_PROGRESS]
+        allowed_to = [Order.OrderStatus.COMPLETED, Order.OrderStatus.CANCELLED]
+
+        if instance.status not in allowed_from:
             raise serializers.ValidationError("Only orders with status 'in_progress' can be updated.")
-        if not 'status' in validated_data:
-            raise serializers.ValidationError("Only the 'status' field can be updated.")
-        return super().update(instance, validated_data)
+
+        if value not in allowed_to:
+            raise serializers.ValidationError(f"Status can only transition to {allowed_to}.")
+
+        return value

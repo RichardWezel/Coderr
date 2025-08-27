@@ -27,3 +27,4 @@ class isBusinessUser(permissions.BasePermission):
             and request.user.is_authenticated
             and request.user.type == "business"
         )
+

@@ -42,3 +42,13 @@ class IsOrderParticipant(BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
         return obj.customer_user_id == request.user.id or obj.business_user_id == request.user.id
+
+class IsBusinessUser(BasePermission):
+    """
+    Erlaubt alle Methoden nur für Nutzer mit Rolle BUSINESS.
+    """
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        user = request.user
+        return bool(user and user.is_authenticated and getattr(user, "type", None) == CustomUser.Roles.BUSINESS)
