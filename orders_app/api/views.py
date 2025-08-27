@@ -5,10 +5,11 @@ from rest_framework.views import APIView
 
 from orders_app.models import Order
 from .serializers import OrderSerializer
+from .permissions import IsCustomerForCreate, NotOrderingOwnOffer, IsOrderParticipant
 
 class OrdersView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerForCreate, NotOrderingOwnOffer]
 
     def get_queryset(self):
         user = self.request.user
@@ -16,5 +17,7 @@ class OrdersView(generics.ListCreateAPIView):
             models.Q(customer_user=user) | models.Q(business_user=user)
         )
 
-class OrderUpdateDeleteView(APIView):
-    pass
+class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated, IsOrderParticipant]
+    queryset = Order.objects.select_related("customer_user", "business_user", "offer", "offer_detail")

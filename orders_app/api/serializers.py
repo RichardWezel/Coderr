@@ -44,28 +44,6 @@ class OrderSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("OfferDetail with this id does not exist.")
         return value
     
-    def validate(self, attrs):
-        request = self.context.get('request')
-        user: CustomUser = getattr(request, 'user', None)
-
-        if not user or not user.is_authenticated:
-            raise serializers.ValidationError("Authentication required.")
-
-        # Der Kunde muss vom Typ CUSTOMER sein
-        if getattr(user, 'type', None) != CustomUser.Roles.CUSTOMER:
-            raise serializers.ValidationError("Only customers can create orders.")
-
-        # OfferDetail prüfen und Anbieter ermitteln
-        od = OfferDetail.objects.select_related('offer', 'offer__user').get(id=attrs['offer_detail_id'])
-        business_user = od.offer.user
-
-        # Optional: Nutzer darf nicht sein eigenes Angebot bestellen
-        if business_user_id := getattr(business_user, 'id', None):
-            if user.id == business_user_id:
-                raise serializers.ValidationError("You cannot order your own offer.")
-
-        return attrs
-    
     def create(self, validated_data):
         request = self.context['request']
         customer_user: CustomUser = request.user
@@ -76,19 +54,16 @@ class OrderSerializer(serializers.ModelSerializer):
         business_user = related_offer.user
 
         # Order-Snapshot auf Basis des OfferDetails
-        order = Order.objects.create(
+        return Order.objects.create(
             offer=related_offer,
             offer_detail=od,
             customer_user=customer_user,
             business_user=business_user,
-
             title=od.title,
             revisions=od.revisions,
             delivery_time_in_days=od.delivery_time_in_days,
             price=od.price,
             features=od.features,
             offer_type=od.offer_type,
-
             status=Order.OrderStatus.IN_PROGRESS,  # default explizit
         )
-        return order
