@@ -67,3 +67,13 @@ class OrderSerializer(serializers.ModelSerializer):
             offer_type=od.offer_type,
             status=Order.OrderStatus.IN_PROGRESS,  # default explizit
         )
+    
+    def update(self, instance, validated_data):
+        if 'status' in validated_data:
+            instance.status = validated_data['status']
+            instance.save()
+        if not instance.status == Order.OrderStatus.IN_PROGRESS:
+            raise serializers.ValidationError("Only orders with status 'in_progress' can be updated.")
+        if not 'status' in validated_data:
+            raise serializers.ValidationError("Only the 'status' field can be updated.")
+        return super().update(instance, validated_data)
