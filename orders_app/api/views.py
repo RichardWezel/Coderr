@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from orders_app.models import Order
 from .serializers import OrderReadSerializer, OrderCreateSerializer, OrderStatusUpdateSerializer
 from .permissions import IsCustomerForCreate, NotOrderingOwnOffer, IsOrderParticipant
-from .permissions import IsBusinessUser
+from .permissions import IsBusinessUser, IsStaffOrAdminForDelete
 
 class OrdersView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsCustomerForCreate, NotOrderingOwnOffer]
@@ -37,6 +37,8 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
         permissions = super().get_permissions()
         if self.request.method in ['PUT', 'PATCH']:
             permissions.append(IsBusinessUser())
+        if self.request.method == 'DELETE':
+            permissions.append(IsStaffOrAdminForDelete())
         return permissions
 
     def perform_update(self, serializer):
@@ -62,3 +64,12 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.refresh_from_db()
         output_serializer = OrderReadSerializer(instance)
         return Response(output_serializer.data)
+    
+    def destroy(self, request, *args, **kwargs):
+        """
+        Überschreibt das Standardverhalten von DestroyAPIView,
+        sodass ein leeres JSON zurückkommt.
+        """
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({}, status=status.HTTP_200_OK)  

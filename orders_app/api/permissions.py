@@ -4,6 +4,18 @@ from auth_app.models import CustomUser
 from orders_app.models import Order
 from offers_app.models import OfferDetail
 
+class IsStaffOrAdminForDelete(BasePermission):
+    """
+    Erlaubt DELETE nur für Nutzer mit Rolle STAFF oder is_superuser.
+    """
+    message = "Only staff users or admins can delete objects."
+
+    def has_permission(self, request, view):
+        if request.method != "DELETE":
+            return True
+        user = request.user
+        return bool(user and user.is_authenticated and (user.is_staff or user.is_superuser))
+
 class IsCustomerForCreate(BasePermission):
     """
     Erlaubt POST nur für Nutzer mit Rolle CUSTOMER.
@@ -11,7 +23,7 @@ class IsCustomerForCreate(BasePermission):
     """
 
     message = "Only users with role CUSTOMER can create orders."
-    
+
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return True
