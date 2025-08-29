@@ -3,14 +3,19 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from rest_framework import status
+from auth_app.models import CustomUser
+from rest_framework.exceptions import NotFound
+
 
 from orders_app.models import Order
-from .serializers import OrderReadSerializer, OrderCreateSerializer, OrderStatusUpdateSerializer
+from .serializers import OrderReadSerializer, OrderCreateSerializer, OrderStatusUpdateSerializer, OrderCountSerializer
 from .permissions import IsCustomerForCreate, NotOrderingOwnOffer, IsOrderParticipant
 from .permissions import IsBusinessUser, IsStaffOrAdminForDelete
 
 class OrdersView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsCustomerForCreate, NotOrderingOwnOffer]
+  
 
     def get_queryset(self):
         user = self.request.user
@@ -26,7 +31,8 @@ class OrdersView(generics.ListCreateAPIView):
 class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsOrderParticipant]
     queryset = Order.objects.select_related("customer_user", "business_user", "offer", "offer_detail")
-
+    lookup_field = 'id'
+    
     def get_serializer_class(self):
         # Für PATCH/PUT nur den Status-Update-Serializer verwenden
         if self.request.method in ['PUT', 'PATCH']:
@@ -73,3 +79,32 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({}, status=status.HTTP_200_OK)  
+    
+class OrderCountView(generics.GenericAPIView):
+    """
+    Gibt die Anzahl der Bestellungen für einen bestimmten Business-User zurück.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderCountSerializer
+   
+
+    def get(self, request, business_user_id):    
+        if not CustomUser.objects.filter(id=business_user_id).exists():
+            raise NotFound("Business-User with this id does not exist.")  
+        
+        order_count = Order.objects.filter(business_user_id=business_user_id).count()
+        return Response({"order_count": order_count}, status=status.HTTP_200_OK)    
+
+class OrderCompletetdCountView(generics.GenericAPIView):
+    """
+    Gibt die Anzahl der abgeschlossenen Bestellungen für einen bestimmten Business-User zurück.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderCountSerializer
+
+    def get(self, request, business_user_id):    
+        if not CustomUser.objects.filter(id=business_user_id).exists():
+            raise NotFound("Business-User with this id does not exist.")  
+        
+        order_count = Order.objects.filter(business_user_id=business_user_id, status=Order.OrderStatus.COMPLETED).count()
+        return Response({"completed_order_count": order_count}, status=status.HTTP_200_OK)

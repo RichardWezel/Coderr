@@ -107,3 +107,11 @@ class OrderStatusUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"Status can only transition to {allowed_to}.")
 
         return value
+    
+class OrderCountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['order_count']  
+        read_only_fields = fields
+
+    
