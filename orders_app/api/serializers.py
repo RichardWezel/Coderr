@@ -2,6 +2,7 @@ from rest_framework import serializers
 from orders_app.models import Order
 from offers_app.models import OfferDetail
 from auth_app.models import CustomUser
+from rest_framework.exceptions import NotFound
 
 class OrderCreateSerializer(serializers.ModelSerializer):
 
@@ -40,9 +41,16 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     def validate_offer_detail_id(self, value: int):
         if value <= 0:
             raise serializers.ValidationError("offer_detail_id must be a positive integer.")
-        if not OfferDetail.objects.filter(id=value).exists():
-            raise serializers.ValidationError("OfferDetail with this id does not exist.")
+        try:
+            OfferDetail.objects.get(id=value)
+        except OfferDetail.DoesNotExist:
+            raise NotFound("OfferDetail with this id does not exist.")
         return value
+    
+    def validate_user_type(self, user: CustomUser):
+        if not user or not user.is_authenticated or getattr(user, "type", None) != CustomUser.Roles.CUSTOMER:
+            raise serializers.ValidationError("Only users with role CUSTOMER can create orders.")
+        return user
     
     def create(self, validated_data):
         request = self.context['request']

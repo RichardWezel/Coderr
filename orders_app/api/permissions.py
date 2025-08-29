@@ -9,6 +9,9 @@ class IsCustomerForCreate(BasePermission):
     Erlaubt POST nur für Nutzer mit Rolle CUSTOMER.
     GET (List) bleibt durch andere Permissions/IsAuthenticated abgedeckt.
     """
+
+    message = "Only users with role CUSTOMER can create orders."
+    
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return True
