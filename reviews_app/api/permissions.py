@@ -21,3 +21,17 @@ class OneReviewPerBusinessUserPermission(BasePermission):
             reviewer=request.user,
             business_user_id=business_user_id
         ).exists()
+
+class IsReviewerOrReadOnly(BasePermission):
+    """
+    Erlaubt nur dem Ersteller der Review, diese zu bearbeiten oder zu löschen.
+    Alle anderen Benutzer haben nur Lesezugriff.
+    """
+    message = "You do not have permission to modify this review."
+
+    def has_object_permission(self, request, view, obj):
+        # Lesezugriff für alle erlaubt
+        if request.method in ('GET', 'HEAD', 'OPTIONS'):
+            return True
+        # Schreibzugriff nur für den Ersteller der Review
+        return obj.reviewer == request.user
