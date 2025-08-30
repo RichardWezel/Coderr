@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/', include(('offers_app.api.urls', 'offers_app'), namespace='offers')),
     path('api/', include(('orders_app.api.urls', 'orders_app'), namespace='orders')),
     path('api/', include(('reviews_app.api.urls', 'reviews_app'), namespace='reviews_app')),
+    path('api/', include(('shared_app.api.urls', 'shared_app'), namespace='shared_app')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
