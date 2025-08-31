@@ -10,6 +10,7 @@ from offers_app.models import Offer, OfferDetail
 from .serializers import OfferSerializer, OfferDetailSerializer
 from .pagination import OffersGetPagination
 from .permissions import isOwnerOrReadOnly, isBusinessUser
+from .filters import OfferFilter
 
 
 def internal_error_response_500(exception):
@@ -35,7 +36,7 @@ class OffersView(generics.ListCreateAPIView):
     pagination_class = OffersGetPagination
     permission_classes = [IsAuthenticated, isBusinessUser]  
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['user__id', 'min_price', 'min_delivery_time']
+    filterset_class = OfferFilter
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'min_price']
 
