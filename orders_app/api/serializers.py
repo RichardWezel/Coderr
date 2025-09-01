@@ -56,12 +56,10 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         request = self.context['request']
         customer_user: CustomUser = request.user
 
-        # OfferDetail + Offer holen
         od = OfferDetail.objects.select_related('offer', 'offer__user').get(id=validated_data['offer_detail_id'])
         related_offer = od.offer
         business_user = related_offer.user
 
-        # Order-Snapshot auf Basis des OfferDetails
         return Order.objects.create(
             offer=related_offer,
             offer_detail=od,
@@ -73,7 +71,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             price=od.price,
             features=od.features,
             offer_type=od.offer_type,
-            status=Order.OrderStatus.IN_PROGRESS,  # default explizit
+            status=Order.OrderStatus.IN_PROGRESS,  
         )
     
 class OrderReadSerializer(serializers.ModelSerializer):
@@ -84,15 +82,14 @@ class OrderReadSerializer(serializers.ModelSerializer):
             'delivery_time_in_days', 'price', 'features', 'offer_type',
             'status', 'created_at', 'updated_at'
         ]
-        read_only_fields = fields  # alles read-only
+        read_only_fields = fields  
 
 class OrderStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = ['status']  # nur Status darf geupdatet werden
+        fields = ['status']  
 
     def validate_status(self, value):
-        # Optional: erlaubte Transitionen erzwingen
         instance: Order = self.instance
         if not instance:
             return value
@@ -113,5 +110,3 @@ class OrderCountSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['order_count']  
         read_only_fields = fields
-
-    

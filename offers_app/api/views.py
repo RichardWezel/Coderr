@@ -14,22 +14,11 @@ from .filters import OfferFilter
 
 
 def internal_error_response_500(exception):
-    """
-    Return a standardized internal server error response.
-
-    Args:
-        exception (Exception): The raised exception.
-
-    Returns:
-        Response: A DRF Response with a 500 status and error details.
-    """
-
     return Response(
         {"error": "An internal server error has occurred.", "details": str(exception)},
         status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
 
-# offers/
 class OffersView(generics.ListCreateAPIView):
     queryset = Offer.objects.select_related('user').prefetch_related('details')
     serializer_class = OfferSerializer
@@ -40,7 +29,6 @@ class OffersView(generics.ListCreateAPIView):
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'min_price']
 
-# offers/<int:pk>/
 class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateAPIView):
     queryset = Offer.objects.select_related('user').prefetch_related('details')
     serializer_class = OfferSerializer

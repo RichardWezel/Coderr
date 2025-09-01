@@ -1,4 +1,5 @@
 from django.urls import path
+
 from .views import OrdersView, OrderDetailView, OrderCountView, OrderCompletetdCountView
 
 app_name = 'offers_app'

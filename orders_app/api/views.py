@@ -1,22 +1,18 @@
 from django.db import models
-from rest_framework import generics
+
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.response import Response
-from rest_framework import status
+
 from auth_app.models import CustomUser
-from rest_framework.exceptions import NotFound
-
-
 from orders_app.models import Order
 from .serializers import OrderReadSerializer, OrderCreateSerializer, OrderStatusUpdateSerializer, OrderCountSerializer
-from .permissions import IsCustomerForCreate, NotOrderingOwnOffer, IsOrderParticipant
-from .permissions import IsBusinessUser, IsStaffOrAdminForDelete
+from .permissions import IsCustomerForCreate, NotOrderingOwnOffer, IsOrderParticipant, IsBusinessUser, IsStaffOrAdminForDelete
 
 class OrdersView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsCustomerForCreate, NotOrderingOwnOffer]
   
-
     def get_queryset(self):
         user = self.request.user
         return Order.objects.filter(
@@ -54,36 +50,23 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save()
 
     def update(self, request, *args, **kwargs):
-        """
-        Nutzt den Status-Update-Serializer für die Validierung/Speicherung
-        und gibt anschließend die komplette Order mit dem Read-Serializer zurück.
-        """
         partial = kwargs.pop('partial', request.method == 'PATCH')
+        
         instance = self.get_object()
-
-        # Eingabe validieren & speichern (nur 'status')
         input_serializer = self.get_serializer(instance, data=request.data, partial=partial)
         input_serializer.is_valid(raise_exception=True)
         self.perform_update(input_serializer)
 
-        # Neu laden (wegen updated_at etc.) und volle Darstellung zurückgeben
         instance.refresh_from_db()
         output_serializer = OrderReadSerializer(instance)
         return Response(output_serializer.data)
     
     def destroy(self, request, *args, **kwargs):
-        """
-        Überschreibt das Standardverhalten von DestroyAPIView,
-        sodass ein leeres JSON zurückkommt.
-        """
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({}, status=status.HTTP_200_OK)  
     
 class OrderCountView(generics.GenericAPIView):
-    """
-    Gibt die Anzahl der Bestellungen für einen bestimmten Business-User zurück.
-    """
     permission_classes = [IsAuthenticated]
     serializer_class = OrderCountSerializer
    
@@ -96,9 +79,6 @@ class OrderCountView(generics.GenericAPIView):
         return Response({"order_count": order_count}, status=status.HTTP_200_OK)    
 
 class OrderCompletetdCountView(generics.GenericAPIView):
-    """
-    Gibt die Anzahl der abgeschlossenen Bestellungen für einen bestimmten Business-User zurück.
-    """
     permission_classes = [IsAuthenticated]
     serializer_class = OrderCountSerializer
 

@@ -74,13 +74,11 @@ class OfferSerializer(serializers.ModelSerializer):
             rel_url = reverse('offers:offerdetail-detail', args=[d.id], request=request if has_pk else None)
 
             if has_pk:
-                # Absolute URL mit Domain
-                url = rel_url  # z.B. "http://127.0.0.1:8000/api/offerdetails/199/"
+                url = rel_url 
             else:
-                # Relative kurze URL
                 path = urlparse(rel_url).path.lstrip('/')
                 if path.startswith('api/'):
-                    path = path[3:]  # "offerdetails/2/"
+                    path = path[3:]
                 url = path
 
             items.append({"id": d.id, "url": url})
@@ -158,45 +156,25 @@ class OfferSerializer(serializers.ModelSerializer):
     
     @transaction.atomic
     def update(self, instance: Offer, validated_data):
-        """
-        PATCH/PUT: Falls 'details' übergeben werden, MUSS jedes Element 'offer_type' enthalten.
-        Wir suchen das vorhandene Detail zu diesem Typ und aktualisieren nur die übergebenen Felder.
-        """
         details_data = validated_data.pop('details', None)
-
-        # Zuerst das Offer selbst (title, description, image, ...)
         instance = super().update(instance, validated_data)
 
         if details_data is not None:
-            # Map für schnelleren Zugriff
             existing_by_type = {d.offer_type: d for d in instance.details.all()}
-
             allowed = {c[0] for c in OfferDetail.OfferTypes.choices}
             for payload in details_data:
                 ot = payload.get('offer_type')
                 if ot not in allowed:
                     raise serializers.ValidationError({'details': f'Invalid offer_type: {ot}'})
                 if ot not in existing_by_type:
-                    # Optional: Streng sein und Fehler werfen, falls ein Typ fehlt:
                     raise serializers.ValidationError({'details': f'Offer does not have a detail for type "{ot}". You must maintain exactly one per type.'})
 
                 detail = existing_by_type[ot]
-
-                # Nur Felder updaten, die im Payload enthalten sind:
                 updatable_fields = ['title', 'revisions', 'delivery_time_in_days', 'price', 'features']
                 for f in updatable_fields:
                     if f in payload:
                         setattr(detail, f, payload[f])
                 detail.save()
 
-        # min_* neu berechnen
         self._recalc_min_fields(instance)
-        return instance
-    
-# class OfferDetaisPKSerializer(serializers.ModelSerializer):
-    
-#     class Meta:
-#         model = OfferDetail
-#         fields = ['id', 'title', 'revisions','image','description', 'created_at', 'updated_at', 'details', 'min_price']
-
-    
+        return instance    

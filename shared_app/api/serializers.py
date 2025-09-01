@@ -1,8 +1,4 @@
 from rest_framework import serializers
-from reviews_app.models import Review
-from auth_app.models import CustomUser
-from offers_app.models import Offer
-from django.db import models
 
 class BaseInfoSerializer(serializers.Serializer):
     review_count = serializers.IntegerField(read_only=True)

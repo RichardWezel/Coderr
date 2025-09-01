@@ -9,14 +9,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, generics, serializers
 
 from profile_app.models import UserProfile
-from profile_app.api.serializers import UserProfileSerializer, FileUploadSerializer, TypeSpecificProfileSerializer
+from .serializers import UserProfileSerializer, FileUploadSerializer, TypeSpecificProfileSerializer
 from auth_app.models import CustomUser
 
 
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
-    """
-    View to retrieve a user's profile by primary key.
-    """
+    
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
     
@@ -26,7 +24,7 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
         except UserProfile.DoesNotExist:
             raise Http404("User profile does not exist")
         if obj.user != self.request.user:
-            raise PermissionDenied("Not allowed to edit this profile.")
+            raise PermissionDenied("Not allowed to edit or request this profile.")
         return obj
     
     @transaction.atomic
@@ -70,9 +68,7 @@ class BussinessProfileView(generics.ListAPIView):
         return Response(serializer.data)
 
 class CustomerProfileView(generics.ListAPIView):
-    """
-    View to retrieve a business profile by primary key.
-    """
+   
     permission_classes = [IsAuthenticated]
     serializer_class = TypeSpecificProfileSerializer
     

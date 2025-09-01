@@ -1,10 +1,13 @@
-from rest_framework import generics, permissions
-from reviews_app.models import Review
-from reviews_app.api.serializers import ReviewSerializer, ReviewDetailSerializer
-from reviews_app.api.permissions import OneReviewPerBusinessUserPermission, IsReviewerOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import generics, permissions, status
+
+from reviews_app.models import Review
+from .serializers import ReviewSerializer, ReviewDetailSerializer
+from .permissions import OneReviewPerBusinessUserPermission, IsReviewerOrReadOnly
+
+
 
 class ReviewView(generics.ListCreateAPIView):
     queryset = Review.objects.all()

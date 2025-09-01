@@ -1,4 +1,5 @@
 from django.urls import path
+
 from .views import ProfileDetailView as Profile
 from .views import BussinessProfileView as BusinessProfiles
 from .views import CustomerProfileView as CustomerProfiles
