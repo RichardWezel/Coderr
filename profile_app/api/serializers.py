@@ -50,7 +50,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def validate_working_hours(self, value):
         if not isinstance(value, str):
             raise serializers.ValidationError("Working hours must be a string.")
-        return value.strip()
+        value = value.strip()
+        if value.isdigit():
+            raise serializers.ValidationError("Working hours cannot be only digits. Please patch a string value for working_hours")
+        return value
 
     def validate_description(self, value):
         if not isinstance(value, str):
