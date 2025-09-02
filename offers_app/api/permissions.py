@@ -17,7 +17,7 @@ class isBusinessUser(permissions.BasePermission):
     """
     Custom permission to only allow business users to create, update, or delete offers.
     """
-
+    message = "Only User with type 'business' can post a new offer!"
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
