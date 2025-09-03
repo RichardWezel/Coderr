@@ -12,6 +12,7 @@ from .serializers import OfferSerializer, OfferDetailSerializer
 from .pagination import OffersGetPagination
 from .permissions import isOwnerOrReadOnly, isBusinessUser
 from .filters import OfferFilter
+from .permissions import isOfferCreator
 
 
 def internal_error_response_500(exception):
@@ -34,7 +35,7 @@ class OffersView(generics.ListCreateAPIView):
             return [IsAuthenticated(), isBusinessUser()]
         return [AllowAny()]
 
-class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateAPIView):
+class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Offer.objects.select_related('user').prefetch_related('details')
     serializer_class = OfferSerializer
     permission_classes = [IsAuthenticated, isOwnerOrReadOnly, isBusinessUser]
@@ -61,6 +62,18 @@ class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateAPIView):
 
         except (PermissionDenied, NotFound, ValidationError, ParseError, Http404) as e:
             raise e 
+        except Exception as e:
+            return internal_error_response_500(e)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            if instance.user != request.user:
+                raise PermissionDenied("You do not have permission to delete this offer.")
+            self.perform_destroy(instance)
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
+        except (PermissionDenied, NotFound, ValidationError, ParseError, Http404) as e:
+            raise e
         except Exception as e:
             return internal_error_response_500(e)
 
