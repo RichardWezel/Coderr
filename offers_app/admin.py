@@ -21,7 +21,7 @@ class OfferAdmin(admin.ModelAdmin):
 class OfferDetailAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'offer', 'title', 'offer_type',
-        'price', 'revisions', 'delivery_time_in_days'
+        'price', 'revisions', 'delivery_time_in_days', 'features_display'
     )
     search_fields = (
         'title', 'offer__title', 'offer__user__username', 'offer__user__email'
@@ -30,3 +30,15 @@ class OfferDetailAdmin(admin.ModelAdmin):
     ordering = ('id',)
     autocomplete_fields = ('offer',)
     list_select_related = ('offer',)
+
+    def features_display(self, obj):
+        """Readable, truncated features list for admin change list."""
+        feats = obj.features or []
+        if not isinstance(feats, list):
+            return str(feats)
+        if not feats:
+            return "-"
+        shown = ', '.join(map(str, feats[:3]))
+        extra = len(feats) - 3
+        return shown if extra <= 0 else f"{shown} …(+{extra})"
+    features_display.short_description = 'Features'
