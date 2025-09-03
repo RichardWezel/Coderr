@@ -10,7 +10,7 @@ from rest_framework.exceptions import ValidationError, NotFound, PermissionDenie
 from offers_app.models import Offer, OfferDetail
 from .serializers import OfferSerializer, OfferDetailSerializer
 from .pagination import OffersGetPagination
-from .permissions import isOwnerOrReadOnly, isBusinessUser
+from .permissions import isOwnerOrReadOnly, isBusinessUser, isOfferCreator
 from .filters import OfferFilter
 from .permissions import isOfferCreator
 
@@ -38,7 +38,13 @@ class OffersView(generics.ListCreateAPIView):
 class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Offer.objects.select_related('user').prefetch_related('details')
     serializer_class = OfferSerializer
-    permission_classes = [IsAuthenticated, isOwnerOrReadOnly, isBusinessUser]
+
+    def get_permissions(self):
+        if self.request.method == 'PATCH' or 'PUT':
+            return [IsAuthenticated(), isOwnerOrReadOnly()]
+        if self.request.method == 'DELETE':
+            [IsAuthenticated(), isOfferCreator()]
+        return [IsAuthenticated()]
 
     def update(self, request, *args, **kwargs):
         try:
