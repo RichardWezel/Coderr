@@ -1,9 +1,10 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter, SearchFilter
 from django.http import Http404
 
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError, NotFound, PermissionDenied
 
 from offers_app.models import Offer, OfferDetail
@@ -23,11 +24,15 @@ class OffersView(generics.ListCreateAPIView):
     queryset = Offer.objects.select_related('user').prefetch_related('details')
     serializer_class = OfferSerializer
     pagination_class = OffersGetPagination
-    permission_classes = [IsAuthenticated, isBusinessUser]  
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = OfferFilter
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'min_price']
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated(), isBusinessUser()]
+        return [AllowAny()]
 
 class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateAPIView):
     queryset = Offer.objects.select_related('user').prefetch_related('details')
