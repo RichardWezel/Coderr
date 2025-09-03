@@ -5,7 +5,7 @@ from django.http import Http404
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.exceptions import ValidationError, NotFound, PermissionDenied
+from rest_framework.exceptions import ValidationError, NotFound, PermissionDenied, ParseError
 
 from offers_app.models import Offer, OfferDetail
 from .serializers import OfferSerializer, OfferDetailSerializer
@@ -52,9 +52,14 @@ class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateAPIView):
             serializer.is_valid(raise_exception=True)
 
             self.perform_update(serializer)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            # Always return full Offer with all details after update
+            output_serializer = OfferSerializer(
+                instance,
+                context={**self.get_serializer_context(), 'force_full_details': True}
+            )
+            return Response(output_serializer.data, status=status.HTTP_200_OK)
 
-        except (PermissionDenied, NotFound, ValidationError, Http404) as e:
+        except (PermissionDenied, NotFound, ValidationError, ParseError, Http404) as e:
             raise e 
         except Exception as e:
             return internal_error_response_500(e)

@@ -48,11 +48,35 @@ class OfferDetailSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Price must be a non-negative number.")
         return Decimal(value)
     
+    def validate_features(self, value):
+        """Ensure features is a list of strings."""
+        if not isinstance(value, list):
+            raise serializers.ValidationError("features must be a list of strings.")
+        for v in value:
+            if not isinstance(v, str):
+                raise serializers.ValidationError("Each feature must be a string.")
+        return value
+
     def validate_offer_type(self, value):
         """Validate offer_type against declared choices."""
         if value not in [choice[0] for choice in OfferDetail.OfferTypes.choices]:
             raise serializers.ValidationError(f"Offer type must be one of {OfferDetail.OfferTypes.choices}.")
         return value
+
+    def to_representation(self, instance):
+        """Optionally return parent Offer if explicitly requested via context.
+
+        Avoids recursion during Offer updates by only triggering when a view
+        sets context['return_parent_offer'] = True (e.g., OfferDetail update
+        endpoints). Otherwise, returns the standard OfferDetail representation.
+        """
+        if self.context.get('return_parent_offer'):
+            offer_serializer = OfferSerializer(
+                instance.offer,
+                context={**self.context, 'force_full_details': True}
+            )
+            return offer_serializer.data
+        return super().to_representation(instance)
 
 class OfferSerializer(serializers.ModelSerializer):
     """Serializer for Offer with nested OfferDetails handling and summaries."""
@@ -125,21 +149,49 @@ class OfferSerializer(serializers.ModelSerializer):
         return {c[0] for c in OfferDetail.OfferTypes.choices}
 
     def _validate_details_on_create(self, details, allowed):
-        """Validate that exactly one of each detail type is provided on create."""
+        """Validate that exactly one of each detail type is provided on create.
+
+        Also validates that each detail contains a valid 'features' list[str].
+        """
         if not isinstance(details, list) or len(details) != 3:
             raise serializers.ValidationError({'details': 'Exactly 3 details (basic, standard, premium) are required.'})
         types = [d.get('offer_type') for d in details]
         if set(types) != allowed:
             raise serializers.ValidationError({'details': f'Must include exactly one of each: {sorted(allowed)}.'})
+        for d in details:
+            self._assert_features_present_and_valid(d)
 
     def _validate_details_on_update(self, details, allowed):
-        """Validate provided details list and types on update operations."""
+        """Validate provided details list and types on update operations.
+
+        If 'features' is provided, ensure it is list[str]; also catch 'feature' typo.
+        """
         if not isinstance(details, list) or len(details) == 0:
             raise serializers.ValidationError({'details': 'If provided, details must be a non-empty list.'})
         for d in details:
             ot = d.get('offer_type')
             if ot not in allowed:
                 raise serializers.ValidationError({'details': f'Each detail must include a valid offer_type in {sorted(allowed)}.'})
+            if 'feature' in d and 'features' not in d:
+                raise serializers.ValidationError({'details': "Unknown field 'feature'. Did you mean 'features' (list of strings)?"})
+            if 'features' in d:
+                self._assert_features_type(d['features'])
+
+    def _assert_features_present_and_valid(self, payload):
+        """Ensure payload contains 'features' and it is list[str]."""
+        if 'feature' in payload and 'features' not in payload:
+            raise serializers.ValidationError({'details': "Unknown field 'feature'. Use 'features' (list of strings)."})
+        if 'features' not in payload:
+            raise serializers.ValidationError({'details': "Each detail must include 'features' (list of strings)."})
+        self._assert_features_type(payload['features'])
+
+    def _assert_features_type(self, value):
+        """Validate that 'features' is an array of strings and report bad positions."""
+        if not isinstance(value, list):
+            raise serializers.ValidationError({'details': "'features' must be an array (list) of strings."})
+        bad_positions = [i for i, v in enumerate(value) if not isinstance(v, str)]
+        if bad_positions:
+            raise serializers.ValidationError({'details': f"All items in 'features' must be strings. Invalid at positions {bad_positions}."})
 
     def to_representation(self, instance):
         """Return ordered representation with either thin or full details.
@@ -160,6 +212,8 @@ class OfferSerializer(serializers.ModelSerializer):
 
     def _compute_details_representation(self, instance, method):
         """Choose between full or thin details list based on context."""
+        if self.context.get('force_full_details'):
+            return self._full_details(instance)
         if method == 'POST' or (method in ('PUT', 'PATCH') and 'details' in getattr(self, 'initial_data', {})):
             return self._full_details(instance)
         return self._thin_details(instance)
