@@ -12,7 +12,6 @@ from .serializers import OfferSerializer, OfferDetailSerializer
 from .pagination import OffersGetPagination
 from .permissions import isOwnerOrReadOnly, isBusinessUser, isOfferCreator
 from .filters import OfferFilter
-from .permissions import isOfferCreator
 
 
 def internal_error_response_500(exception):
@@ -85,5 +84,5 @@ class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
 
 class OfferDetailRetrieveView(generics.RetrieveAPIView):
     queryset = OfferDetail.objects.select_related('offer', 'offer__user')
-    serializer_class = OfferDetailSerializer  # oder dein *Full*-Serializer
+    serializer_class = OfferDetailSerializer
     permission_classes = [IsAuthenticated]
