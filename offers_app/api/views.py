@@ -64,7 +64,6 @@ class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
             serializer.is_valid(raise_exception=True)
 
             self.perform_update(serializer)
-            # Always return full Offer with all details after update
             output_serializer = OfferSerializer(
                 instance,
                 context={**self.get_serializer_context(), 'force_full_details': True}

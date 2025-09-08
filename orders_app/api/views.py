@@ -35,7 +35,6 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     
     def get_serializer_class(self):
         """For PUT/PATCH return status update serializer; read otherwise."""
-        # Für PATCH/PUT nur den Status-Update-Serializer verwenden
         if self.request.method in ['PUT', 'PATCH']:
             return OrderStatusUpdateSerializer
         return OrderReadSerializer

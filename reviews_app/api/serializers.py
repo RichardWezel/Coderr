@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from reviews_app.models import Review
+
 from auth_app.models import CustomUser
-from rest_framework.exceptions import NotFound
+
 
 class ReviewSerializer(serializers.ModelSerializer):
     """Serializer for creating and listing reviews.

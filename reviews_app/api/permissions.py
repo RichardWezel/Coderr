@@ -23,10 +23,8 @@ class IsReviewerOrReadOnly(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         """Grant safe methods; require ownership for mutations."""
-        # Lesezugriff für alle erlaubt
         if request.method in ('GET', 'HEAD', 'OPTIONS'):
             return True
-        # Schreibzugriff nur für den Ersteller der Review
         return obj.reviewer == request.user
     
 class IsCustomerUser(BasePermission):

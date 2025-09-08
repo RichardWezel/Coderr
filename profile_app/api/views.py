@@ -29,7 +29,6 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
             obj = UserProfile.objects.get(pk=self.kwargs['pk'])
         except UserProfile.DoesNotExist:
             raise Http404("User profile does not exist")
-        # Enforce object-level permissions
         self.check_object_permissions(self.request, obj)
         return obj
     

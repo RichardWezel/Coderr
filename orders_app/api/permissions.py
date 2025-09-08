@@ -39,11 +39,11 @@ class NotOrderingOwnOffer(BasePermission):
             return True
         od_id = request.data.get("offer_detail_id")
         if not od_id:
-            return True  # Feldvalidierung übernimmt der Serializer
+            return True  
         try:
             od = OfferDetail.objects.select_related("offer", "offer__user").get(id=od_id)
         except OfferDetail.DoesNotExist:
-            return True  # Serializer meldet „existiert nicht“
+            return True 
         return od.offer.user_id != request.user.id
 
 class IsOrderParticipant(BasePermission):

@@ -1,8 +1,6 @@
 from rest_framework import serializers
 
-from profile_app.models import UserProfile
-from profile_app.models import FileUpload
-
+from profile_app.models import UserProfile, FileUpload
 
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for reading/updating a user's profile.
