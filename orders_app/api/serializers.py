@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from orders_app.models import Order, OfferDetail
+from orders_app.models import Order
+from offers_app.models import OfferDetail
 from auth_app.models import CustomUser
 from rest_framework.exceptions import NotFound
 
@@ -11,7 +12,14 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     referenced OfferDetail and its parent Offer.
     """
 
-    offer_detail_id = serializers.IntegerField(write_only=True)
+    offer_detail_id = serializers.IntegerField(
+        write_only=True,
+        required=True,
+        error_messages={
+            "invalid": "offer_detail_id must be a valid integer.",
+            "required": "offer_detail_id is required.",
+        },
+    )
 
     class Meta:
         model = Order
@@ -45,6 +53,8 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     
     def validate_offer_detail_id(self, value: int):
         """Ensure a positive integer and that the OfferDetail exists."""
+        if not isinstance(value, int):
+            raise serializers.ValidationError("offer_detail_id must be a valid integer.")
         if value <= 0:
             raise serializers.ValidationError("offer_detail_id must be a positive integer.")
         try:

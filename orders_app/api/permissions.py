@@ -41,9 +41,13 @@ class NotOrderingOwnOffer(BasePermission):
         if not od_id:
             return True  
         try:
-            od = OfferDetail.objects.select_related("offer", "offer__user").get(id=od_id)
+            od_id_int = int(od_id)
+        except (TypeError, ValueError):
+            return True
+        try:
+            od = OfferDetail.objects.select_related("offer", "offer__user").get(id=od_id_int)
         except OfferDetail.DoesNotExist:
-            return True 
+            return True
         return od.offer.user_id != request.user.id
 
 class IsOrderParticipant(BasePermission):
