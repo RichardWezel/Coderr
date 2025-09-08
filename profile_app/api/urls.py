@@ -7,8 +7,8 @@ from .views import FileUploadView
 
 urlpatterns = [
     path('profile/<int:pk>/', Profile.as_view(), name='profile'),
-    path('profile/business/', BusinessProfiles.as_view(), name='business-profile'),
-    path('profile/customer/', CustomerProfiles.as_view(), name='customer-profile'),
+    path('profiles/business/', BusinessProfiles.as_view(), name='business-profile'),
+    path('profiles/customer/', CustomerProfiles.as_view(), name='customer-profile'),
     path('upload/', FileUploadView.as_view(), name='file-upload'),
 ]
 
