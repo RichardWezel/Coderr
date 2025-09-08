@@ -5,14 +5,14 @@ from rest_framework import generics, permissions, status
 
 from reviews_app.models import Review
 from .serializers import ReviewSerializer, ReviewDetailSerializer
-from .permissions import OneReviewPerBusinessUserPermission, IsReviewerOrReadOnly
+from .permissions import OneReviewPerBusinessUserPermission, IsReviewerOrReadOnly, IsCustomerUser
 
 
 
 class ReviewView(generics.ListCreateAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, OneReviewPerBusinessUserPermission]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, OneReviewPerBusinessUserPermission, IsCustomerUser]
     ordering_fields = ['updated_at', 'rating']
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['business_user_id', 'reviewer_id']

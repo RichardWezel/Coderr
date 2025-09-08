@@ -25,3 +25,11 @@ class IsReviewerOrReadOnly(BasePermission):
             return True
         # Schreibzugriff nur für den Ersteller der Review
         return obj.reviewer == request.user
+    
+class IsCustomerUser(BasePermission):
+    message = "Only customer users can create reviews."
+
+    def has_permission(self, request, view):
+        if request.method != 'POST':
+            return True
+        return request.user.is_authenticated and not request.user.type == 'business'

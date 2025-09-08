@@ -64,7 +64,7 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        return Response({}, status=status.HTTP_200_OK)  
+        return Response(status=status.HTTP_200_OK)  
     
 class OrderCountView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
