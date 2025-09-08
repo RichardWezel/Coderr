@@ -2,6 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
+from rest_framework.permissions import IsAuthenticated
 
 from reviews_app.models import Review
 from .serializers import ReviewSerializer, ReviewDetailSerializer
@@ -13,7 +14,7 @@ class ReviewView(generics.ListCreateAPIView):
     """List reviews and allow authenticated customers to create one per business."""
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsCustomerUser]
+    permission_classes = [IsAuthenticated, IsCustomerUser]
     ordering_fields = ['updated_at', 'rating']
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['business_user_id', 'reviewer_id']
