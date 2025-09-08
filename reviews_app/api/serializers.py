@@ -32,6 +32,18 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'reviewer', 'updated_at']
         write_only_fields = ['business_user', 'rating', 'description']
 
+    def validate(self, attrs):
+        """Ensure the reviewer has not already reviewed this business user.
+
+        Returns a 400 ValidationError if a duplicate review is attempted.
+        """
+        request = self.context.get("request")
+        business_user = attrs.get("business_user")
+        if request and request.user and request.user.is_authenticated and business_user:
+            if Review.objects.filter(reviewer=request.user, business_user=business_user).exists():
+                raise serializers.ValidationError("You have already reviewed this business user.")
+        return attrs
+
     def validate_business_user(self, value: int):
         """Ensure the target is a BUSINESS user and not the requester."""
         if getattr(value, "type", None) != CustomUser.Roles.BUSINESS:

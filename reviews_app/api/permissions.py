@@ -1,21 +1,5 @@
 from rest_framework.permissions import BasePermission
-from reviews_app.models import Review
 
-class OneReviewPerBusinessUserPermission(BasePermission):
-    """Limit each reviewer to a single review per business user (on POST)."""
-    message = "You have already reviewed this business user."
-    def has_permission(self, request, view):
-        if request.method != 'POST':
-            return True
-
-        business_user_id = request.data.get('business_user')
-        if not business_user_id or not request.user.is_authenticated:
-            return False
-
-        return not Review.objects.filter(
-            reviewer=request.user,
-            business_user_id=business_user_id
-        ).exists()
 
 class IsReviewerOrReadOnly(BasePermission):
     """Allow read to all; write only to the review's author."""

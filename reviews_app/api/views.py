@@ -5,7 +5,7 @@ from rest_framework import generics, permissions, status
 
 from reviews_app.models import Review
 from .serializers import ReviewSerializer, ReviewDetailSerializer
-from .permissions import OneReviewPerBusinessUserPermission, IsReviewerOrReadOnly, IsCustomerUser
+from .permissions import IsReviewerOrReadOnly, IsCustomerUser
 
 
 
@@ -13,7 +13,7 @@ class ReviewView(generics.ListCreateAPIView):
     """List reviews and allow authenticated customers to create one per business."""
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, OneReviewPerBusinessUserPermission, IsCustomerUser]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsCustomerUser]
     ordering_fields = ['updated_at', 'rating']
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['business_user_id', 'reviewer_id']
@@ -22,7 +22,7 @@ class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
     """Retrieve, update, or delete a review with reviewer-only write access."""
     queryset = Review.objects.all()
     serializer_class = ReviewDetailSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, OneReviewPerBusinessUserPermission, IsReviewerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsReviewerOrReadOnly]
     lookup_field = 'id'
 
     def update(self, request, *args, **kwargs):
