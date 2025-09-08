@@ -42,8 +42,6 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
         """Append role-based permissions for update/delete operations."""
         permissions = super().get_permissions()
-        if self.request.method in ['PUT', 'PATCH']:
-            permissions.append(IsBusinessUser())
         if self.request.method == 'DELETE':
             permissions.append(IsStaffOrAdminForDelete())
         return permissions
