@@ -85,7 +85,10 @@ class OrderCountView(generics.GenericAPIView):
         if not CustomUser.objects.filter(id=business_user_id).exists():
             raise NotFound("Business-User with this id does not exist.")  
         
-        order_count = Order.objects.filter(business_user_id=business_user_id).count()
+        order_count = Order.objects.filter(
+            business_user_id=business_user_id,
+            status=Order.OrderStatus.IN_PROGRESS,
+        ).count()
         return Response({"order_count": order_count}, status=status.HTTP_200_OK)    
 
 class OrderCompletetdCountView(generics.GenericAPIView):
