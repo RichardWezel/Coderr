@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
+    """Custom user with unique email and role type (customer/business)."""
     class Roles(models.TextChoices):
         CUSTOMER = "customer", "Customer"
         BUSINESS = "business", "Business"

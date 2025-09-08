@@ -3,6 +3,7 @@ from auth_app.models import CustomUser
 
 
 class UserProfile(models.Model):
+    """Extended profile data associated one-to-one with a CustomUser."""
     user = models.OneToOneField(
         CustomUser, 
         on_delete=models.CASCADE,
@@ -27,5 +28,6 @@ class UserProfile(models.Model):
         return self.username
     
 class FileUpload(models.Model):
+    """Simple uploaded file record with timestamp."""
     file = models.FileField(upload_to='uploads/')
     uploaded_at = models.DateTimeField(auto_now_add=True)

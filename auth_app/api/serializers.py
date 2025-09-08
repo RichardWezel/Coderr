@@ -21,6 +21,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
+        """Ensure password match and uniqueness for email and username."""
 
         if data['password'] != data['repeated_password']:
             raise serializers.ValidationError("Paswords do not match.")

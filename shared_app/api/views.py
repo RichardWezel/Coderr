@@ -9,11 +9,13 @@ from offers_app.models import Offer
 from .serializers import BaseInfoSerializer
 
 class BaseInfoView(generics.GenericAPIView):
+    """Provide aggregate statistics for the landing/dashboard view."""
    
     permission_classes = [permissions.AllowAny]
     serializer_class = BaseInfoSerializer
 
     def get(self, request):
+        """Compute counts and average rating; return serialized output."""
         avg = Review.objects.aggregate(avg=Avg('rating'))['avg'] or 0.0
 
         data = {

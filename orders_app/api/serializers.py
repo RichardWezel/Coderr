@@ -5,6 +5,11 @@ from auth_app.models import CustomUser
 from rest_framework.exceptions import NotFound
 
 class OrderCreateSerializer(serializers.ModelSerializer):
+    """Create serializer for Orders using an OfferDetail as source.
+
+    Takes `offer_detail_id` as input and derives immutable fields from the
+    referenced OfferDetail and its parent Offer.
+    """
 
     offer_detail_id = serializers.IntegerField(write_only=True)
 
@@ -39,6 +44,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         )
     
     def validate_offer_detail_id(self, value: int):
+        """Ensure a positive integer and that the OfferDetail exists."""
         if value <= 0:
             raise serializers.ValidationError("offer_detail_id must be a positive integer.")
         try:
@@ -48,11 +54,13 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return value
     
     def validate_user_type(self, user: CustomUser):
+        """Validate that the requesting user has CUSTOMER role."""
         if not user or not user.is_authenticated or getattr(user, "type", None) != CustomUser.Roles.CUSTOMER:
             raise serializers.ValidationError("Only users with role CUSTOMER can create orders.")
         return user
     
     def create(self, validated_data):
+        """Create an Order from the selected OfferDetail and current user."""
         request = self.context['request']
         customer_user: CustomUser = request.user
 
@@ -75,6 +83,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         )
     
 class OrderReadSerializer(serializers.ModelSerializer):
+    """Read-only serializer for returning Orders to clients."""
     class Meta:
         model = Order
         fields = [
@@ -85,11 +94,13 @@ class OrderReadSerializer(serializers.ModelSerializer):
         read_only_fields = fields  
 
 class OrderStatusUpdateSerializer(serializers.ModelSerializer):
+    """Serializer to update Order status with valid transitions only."""
     class Meta:
         model = Order
         fields = ['status']  
 
     def validate_status(self, value):
+        """Enforce allowed status transitions from IN_PROGRESS to final states."""
         instance: Order = self.instance
         if not instance:
             return value
@@ -106,6 +117,7 @@ class OrderStatusUpdateSerializer(serializers.ModelSerializer):
         return value
     
 class OrderCountSerializer(serializers.ModelSerializer):
+    """Serializer for count responses on orders (read-only)."""
     class Meta:
         model = Order
         fields = ['order_count']  

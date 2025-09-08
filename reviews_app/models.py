@@ -3,6 +3,7 @@ from django.db import models
 from auth_app.models import CustomUser
 
 class Review(models.Model):
+    """A rating and optional text a customer writes for a business user."""
     business_user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='reviews')
     reviewer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='given_reviews')
     rating = models.PositiveIntegerField()

@@ -11,11 +11,13 @@ from .serializers import RegistrationSerializer
 User = get_user_model()
 
 class RegistrationView(APIView):
+    """Register a new user and return an auth token."""
     
     permission_classes = [permissions.AllowAny] 
     authentication_classes = []
 
     def post(self, request, *args, **kwargs):
+        """Validate registration payload, create user and return token."""
 
         try:
             serializer = RegistrationSerializer(data=request.data)

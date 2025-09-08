@@ -10,6 +10,7 @@ from .permissions import OneReviewPerBusinessUserPermission, IsReviewerOrReadOnl
 
 
 class ReviewView(generics.ListCreateAPIView):
+    """List reviews and allow authenticated customers to create one per business."""
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, OneReviewPerBusinessUserPermission, IsCustomerUser]
@@ -18,12 +19,14 @@ class ReviewView(generics.ListCreateAPIView):
     filterset_fields = ['business_user_id', 'reviewer_id']
 
 class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update, or delete a review with reviewer-only write access."""
     queryset = Review.objects.all()
     serializer_class = ReviewDetailSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, OneReviewPerBusinessUserPermission, IsReviewerOrReadOnly]
     lookup_field = 'id'
 
     def update(self, request, *args, **kwargs):
+        """Apply partial/full updates; return refreshed review payload."""
        
         partial = kwargs.pop('partial', request.method == 'PATCH')
         instance = self.get_object()
@@ -37,6 +40,7 @@ class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response(output_serializer.data)
     
     def destroy(self, request, *args, **kwargs):
+        """Delete the review and return an empty JSON object."""
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({}, status=status.HTTP_200_OK)  

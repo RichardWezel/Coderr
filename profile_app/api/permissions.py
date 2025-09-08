@@ -7,6 +7,7 @@ class UpdatingUserIsProfileUser(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
+        """Grant read to all; write only to profile owner."""
         # Allow safe methods (GET, HEAD, OPTIONS) for any user
         if request.method in permissions.SAFE_METHODS:
             return True

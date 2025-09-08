@@ -5,6 +5,11 @@ from profile_app.models import FileUpload
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    """Serializer for reading/updating a user's profile.
+
+    Includes validations for names, location, tel, description, and working_hours.
+    Exposes `user` as read-only foreign key (user.id).
+    """
 
     user = serializers.IntegerField(source='user.id', read_only=True)
 
@@ -14,6 +19,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['user', 'username', 'type', 'created_at']
 
     def _validate_name(self, value):
+        """Validate that a name is a non-empty string without digits.
+
+        Allows spaces, hyphens and apostrophes.
+        """
         if not isinstance(value, str):
             raise serializers.ValidationError("Must be a string.")
         value = value.strip()
@@ -24,11 +33,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return value
 
     def validate_tel(self, value):
+        """Validate telephone string; allow empty, only digits otherwise."""
         if value and not str(value).isdigit() and len(str(value)) > 0 and not str(value):
             raise serializers.ValidationError("Phone number must contain only digits in a string.")
         return value
 
     def validate_username(self, value):
+        """Ensure username is unique across profiles, excluding self on updates."""
         qs = UserProfile.objects.filter(username=value)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
@@ -37,22 +48,27 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return value
 
     def validate_first_name(self, value):
+        """Proxy to common name validation for first name."""
         return self._validate_name(value)
 
     def validate_last_name(self, value):
+        """Proxy to common name validation for last name."""
         return self._validate_name(value)
 
     def validate_location(self, value):
+        """Trim string and ensure location is a string."""
         if not isinstance(value, str):
             raise serializers.ValidationError("Location must be a string.")
         return value.strip()
 
     def validate_working_hours(self, value):
+        """Normalize working_hours: requires string, trims whitespace."""
         if not isinstance(value, str):
             raise serializers.ValidationError("Working hours must be a string.")
         return value.strip()
 
     def validate_description(self, value):
+        """Trim string; disallow pure-digit descriptions."""
         if not isinstance(value, str):
             raise serializers.ValidationError("Description must be a string.")
         value = value.strip()
@@ -61,6 +77,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return value
 
 class TypeSpecificProfileSerializer(UserProfileSerializer):
+    """Serializer variant for listing by user type (business/customer)."""
 
     class Meta:
         model = UserProfile
@@ -69,6 +86,7 @@ class TypeSpecificProfileSerializer(UserProfileSerializer):
     
 
 class FileUploadSerializer(serializers.ModelSerializer):
+    """Serializer for saving uploaded files."""
     class Meta:
         model = FileUpload
         fields = ['file', 'uploaded_at']

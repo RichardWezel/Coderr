@@ -4,6 +4,7 @@ from auth_app.models import CustomUser
 # Create your models here.
 
 class Offer(models.Model):
+    """Top-level offer posted by a business user with summary fields."""
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     image = models.FileField(upload_to='offer_images/', blank=True, null=True)
@@ -22,6 +23,7 @@ class Offer(models.Model):
         return self.title
 
 class OfferDetail(models.Model):
+    """Pricing tier (basic/standard/premium) belonging to an Offer."""
     class OfferTypes(models.TextChoices):
         BASIC = "basic", "Basic"
         STANDARD = "standard", "Standard"
@@ -50,4 +52,3 @@ class OfferDetail(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.offer_type}"
-

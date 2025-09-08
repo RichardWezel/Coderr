@@ -15,11 +15,16 @@ from .permissions import UpdatingUserIsProfileUser
 
 
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
-    
+    """Retrieve and update a single user profile.
+
+    Enforces IsAuthenticated and object-level ownership via
+    UpdatingUserIsProfileUser.
+    """
     permission_classes = [IsAuthenticated, UpdatingUserIsProfileUser]
     serializer_class = UserProfileSerializer
     
     def get_object(self):
+        """Fetch the UserProfile by pk and check object permissions."""
         try:
             obj = UserProfile.objects.get(pk=self.kwargs['pk'])
         except UserProfile.DoesNotExist:
@@ -30,6 +35,11 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
     
     @transaction.atomic
     def update(self, request, *args, **kwargs):
+        """Update profile and optionally synchronize email on the user model.
+
+        Supports PATCH (partial) and PUT (full) updates.
+        Performs uniqueness validation for email if provided.
+        """
 
         partial = kwargs.pop('partial', request.method.upper() == 'PATCH')
         instance = self.get_object()
@@ -55,35 +65,40 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
         return Response(serializer.data)
     
 class BussinessProfileView(generics.ListAPIView):
-    """
-    View to retrieve a business profile by primary key.
-    """
+    """List all business user profiles (requires authentication)."""
     permission_classes = [IsAuthenticated]
     serializer_class = TypeSpecificProfileSerializer
     
     def get_queryset(self):
+        """Return queryset of profiles where user type is BUSINESS."""
         return UserProfile.objects.filter(user__type=CustomUser.Roles.BUSINESS)
 
     def list(self, request, *args, **kwargs):
+        """Serialize and return the list of business profiles."""
         qs = self.get_queryset()
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
 class CustomerProfileView(generics.ListAPIView):
-   
+    """List all customer user profiles (requires authentication)."""
     permission_classes = [IsAuthenticated]
     serializer_class = TypeSpecificProfileSerializer
     
     def get_queryset(self):
+        """Return queryset of profiles where user type is CUSTOMER."""
         return UserProfile.objects.filter(user__type=CustomUser.Roles.CUSTOMER)
 
     def list(self, request, *args, **kwargs):
+        """Serialize and return the list of customer profiles."""
         qs = self.get_queryset()
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
     
 class FileUploadView(APIView):
+    """Upload a file and persist via FileUpload model."""
+
     def post(self, request, format=None):
+        """Validate and save uploaded file, return its metadata."""
         serializer = FileUploadSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()

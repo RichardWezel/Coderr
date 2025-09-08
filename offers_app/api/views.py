@@ -15,12 +15,14 @@ from .filters import OfferFilter
 
 
 def internal_error_response_500(exception):
+    """Return a standardized 500 response payload for unexpected exceptions."""
     return Response(
         {"error": "An internal server error has occurred.", "details": str(exception)},
         status=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
 
 class OffersView(generics.ListCreateAPIView):
+    """List offers (public) and create offers (business users only)."""
     queryset = Offer.objects.select_related('user').prefetch_related('details')
     serializer_class = OfferSerializer
     pagination_class = OffersGetPagination
@@ -30,15 +32,18 @@ class OffersView(generics.ListCreateAPIView):
     ordering_fields = ['updated_at', 'min_price']
 
     def get_permissions(self):
+        """Require IsAuthenticated+isBusinessUser for POST; AllowAny otherwise."""
         if self.request.method == 'POST':
             return [IsAuthenticated(), isBusinessUser()]
         return [AllowAny()]
 
 class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update, or delete a single offer with owner checks."""
     queryset = Offer.objects.select_related('user').prefetch_related('details')
     serializer_class = OfferSerializer
 
     def get_permissions(self):
+        """Dynamic permission selection by method: update=owner, delete=creator."""
         if self.request.method == 'PATCH' or 'PUT':
             return [IsAuthenticated(), isOwnerOrReadOnly()]
         if self.request.method == 'DELETE':
@@ -46,6 +51,7 @@ class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
         return [IsAuthenticated()]
 
     def update(self, request, *args, **kwargs):
+        """Partial update of an offer; enforces owner and returns full details."""
         try:
             
             partial = kwargs.pop('partial', True)
@@ -71,6 +77,7 @@ class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
             return internal_error_response_500(e)
 
     def destroy(self, request, *args, **kwargs):
+        """Delete an offer; only the offer owner may perform this action."""
         try:
             instance = self.get_object()
             if instance.user != request.user:
@@ -83,6 +90,7 @@ class OfferRetrieveUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
             return internal_error_response_500(e)
 
 class OfferDetailRetrieveView(generics.RetrieveAPIView):
+    """Retrieve a single OfferDetail; authentication required."""
     queryset = OfferDetail.objects.select_related('offer', 'offer__user')
     serializer_class = OfferDetailSerializer
     permission_classes = [IsAuthenticated]

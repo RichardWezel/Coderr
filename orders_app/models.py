@@ -5,6 +5,7 @@ from offers_app.models import OfferDetail, Offer
 
 
 class Order(models.Model):
+    """Represents a placed order between a customer and business user."""
 
     class OrderStatus(models.TextChoices):
         IN_PROGRESS = "in_progress", "In Progress"
