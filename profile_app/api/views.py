@@ -11,11 +11,12 @@ from rest_framework import status, generics, serializers
 from profile_app.models import UserProfile
 from .serializers import UserProfileSerializer, FileUploadSerializer, TypeSpecificProfileSerializer
 from auth_app.models import CustomUser
+from .permissions import UpdatingUserIsProfileUser
 
 
 class ProfileDetailView(generics.RetrieveUpdateAPIView):
     
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, UpdatingUserIsProfileUser]
     serializer_class = UserProfileSerializer
     
     def get_object(self):
@@ -23,12 +24,13 @@ class ProfileDetailView(generics.RetrieveUpdateAPIView):
             obj = UserProfile.objects.get(pk=self.kwargs['pk'])
         except UserProfile.DoesNotExist:
             raise Http404("User profile does not exist")
-        if obj.user != self.request.user:
-            raise PermissionDenied("Not allowed to edit or request this profile.")
+        # Enforce object-level permissions
+        self.check_object_permissions(self.request, obj)
         return obj
     
     @transaction.atomic
     def update(self, request, *args, **kwargs):
+
         partial = kwargs.pop('partial', request.method.upper() == 'PATCH')
         instance = self.get_object()
 
