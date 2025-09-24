@@ -1,0 +1,14 @@
+# syntax= docker/dockerfile:1
+
+FROM python:3 
+WORKDIR /usr/src/app
+
+COPY requirements.txt ./
+RUN /usr/local/bin/python -m pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . ./
+
+# migrate && runserver in einem Schritt
+CMD ["bash", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+
