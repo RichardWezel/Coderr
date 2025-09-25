@@ -154,3 +154,5 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 CORS_ALLOWED_HEADERS = ["*"]
+
+ALLOWED_HOSTS = ["35.234.113.69", "localhost", "127.0.0.1", "coderr-backend.richard-wezel.de"]
