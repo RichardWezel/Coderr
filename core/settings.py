@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-_$1%bpbt6g5dkrlzuk##p9wa@lxei1@carune(j768djesm*1v
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["35.234.113.69", "localhost", "127.0.0.1", "coderr-backend.richard-wezel.de"]
 
 
 # Application definition
@@ -155,4 +155,3 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 CORS_ALLOWED_HEADERS = ["*"]
 
-ALLOWED_HOSTS = ["35.234.113.69", "localhost", "127.0.0.1", "coderr-backend.richard-wezel.de"]
