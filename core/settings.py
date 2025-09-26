@@ -156,3 +156,4 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 CORS_ALLOWED_HEADERS = ["*"]
 
+CSRF_TRUSTED_ORIGINS = ["https://coderr-backend.richard-wezel.de"]
